@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func main() {
@@ -31,8 +32,11 @@ func main() {
 		panic(err)
 	}
 
+	timestamp := time.Now().Format("20060102-150405")
+	backupPath := filepath.Join(home, "backups", ".zshrc."+timestamp+".backup")
+
 	// open output file
-	fo, err := os.Create(filepath.Join(home, "backups/.zshrc.backup"))
+	fo, err := os.OpenFile(backupPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 	if err != nil {
 		panic(err)
 	}
@@ -44,21 +48,7 @@ func main() {
 		}
 	}()
 
-	// make a buffer to keep chunks that are read
-	buf := make([]byte, 1024)
-	for {
-		// read a chunk
-		n, err := fi.Read(buf)
-		if err != nil && err != io.EOF {
-			panic(err)
-		}
-		if n == 0 {
-			break
-		}
-
-		// write a chunk
-		if _, err := fo.Write(buf[:n]); err != nil {
-			panic(err)
-		}
+	if _, err := io.Copy(fo, fi); err != nil {
+		panic(err)
 	}
 }
