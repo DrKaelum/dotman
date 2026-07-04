@@ -1,10 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
 )
+
+type Dotfile struct {
+	Name   string `json:"name"`
+	Source string `json:"source"`
+	Backup string `json:"backup"`
+}
+
+type Config struct {
+	Dotfiles []Dotfile `json:"dotfiles"`
+}
 
 func main() {
 	// Get home dir path
@@ -61,4 +72,20 @@ func main() {
 			panic(err)
 		}
 	}
+}
+
+func LoadConfig() (Config, error) {
+	data, err := os.ReadFile("config.json")
+	if err != nil {
+		return Config{}, err
+	}
+
+	var config Config
+
+	err = json.Unmarshal(data, &config)
+	if err != nil {
+		return Config{}, err
+	}
+
+	return config, nil
 }
